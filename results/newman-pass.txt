@@ -1,0 +1,144 @@
+newman
+
+Lab05 — Хичээлд бүртгүүлэх API
+
+❏ S1 — Идэвхтэй, урьдач нөхцөл хангасан оюутан бүртгүүлэхэд 201 OK
+↳ setup: PUT /students/B231234567
+  PUT http://localhost:3000/students/B231234567 [200 OK, 178B, 21ms]
+
+↳ setup: PUT /courses/CS313
+  PUT http://localhost:3000/courses/CS313 [200 OK, 178B, 3ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [201 Created, 202B, 2ms]
+  ✓  Статус 201 Created
+  ✓  result = OK
+  ✓  registrationID нь тоо
+
+❏ S2 — Байхгүй оюутан бүртгүүлэхэд ERROR_NO_STUDENT
+↳ setup: PUT /courses/CS313
+  PUT http://localhost:3000/courses/CS313 [200 OK, 178B, 2ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 192B, 2ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_NO_STUDENT
+  ✓  registrationID буцаагаагүй (бүртгэл үүсээгүй)
+
+❏ S3 — Идэвхгүй оюутан бүртгүүлэхэд ERROR_INACTIVE_STUDENT
+↳ setup: PUT /students/B231111111
+  PUT http://localhost:3000/students/B231111111 [200 OK, 178B, 1ms]
+
+↳ setup: PUT /courses/CS313
+  PUT http://localhost:3000/courses/CS313 [200 OK, 178B, 2ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 198B, 2ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_INACTIVE_STUDENT
+  ✓  registrationID буцаагаагүй (бүртгэл үүсээгүй)
+
+❏ S4 — Байхгүй хичээлд бүртгүүлэхэд ERROR_NO_COURSE
+↳ setup: PUT /students/B232222222
+  PUT http://localhost:3000/students/B232222222 [200 OK, 178B, 3ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 191B, 2ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_NO_COURSE
+  ✓  registrationID буцаагаагүй (бүртгэл үүсээгүй)
+
+❏ S5 — Урьдач нөхцөлийн зарим нь дутуу бол ERROR_PREREQUISITES, missing = [CS313]
+↳ setup: PUT /students/B233333333
+  PUT http://localhost:3000/students/B233333333 [200 OK, 178B, 2ms]
+
+↳ setup: PUT /courses/CS401
+  PUT http://localhost:3000/courses/CS401 [200 OK, 178B, 2ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 215B, 1ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_PREREQUISITES
+  ✓  missing = ["CS313"]
+
+❏ S6 — Урьдач нөхцөлийг огт үзээгүй бол ERROR_PREREQUISITES, missing = бүгд
+↳ setup: PUT /students/B234444444
+  PUT http://localhost:3000/students/B234444444 [200 OK, 178B, 2ms]
+
+↳ setup: PUT /courses/CS401
+  PUT http://localhost:3000/courses/CS401 [200 OK, 178B, 1ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 223B, 1ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_PREREQUISITES
+  ✓  missing = ["CS201","CS313"]
+
+❏ S7 — Оюутан ч хичээл ч байхгүй бол ERROR_NO_STUDENT давуу
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 192B, 2ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_NO_STUDENT
+  ✓  registrationID буцаагаагүй (бүртгэл үүсээгүй)
+
+❏ S8 — Идэвхгүй оюутан урьдач нөхцөлгүйгээр бүртгүүлэхэд ERROR_INACTIVE_STUDENT давуу
+↳ setup: PUT /students/B235555555
+  PUT http://localhost:3000/students/B235555555 [200 OK, 178B, 1ms]
+
+↳ setup: PUT /courses/CS313
+  PUT http://localhost:3000/courses/CS313 [200 OK, 178B, 1ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [200 OK, 198B, 1ms]
+  ✓  Статус 200 OK
+  ✓  result = ERROR_INACTIVE_STUDENT
+  ✓  registrationID буцаагаагүй (бүртгэл үүсээгүй)
+
+❏ S9 — Хоосон coursesTaken-тай оюутан урьдач нөхцөлгүй хичээлд бүртгүүлэхэд 201 OK
+↳ setup: PUT /students/B236666666
+  PUT http://localhost:3000/students/B236666666 [200 OK, 178B, 5ms]
+
+↳ setup: PUT /courses/CS101
+  PUT http://localhost:3000/courses/CS101 [200 OK, 178B, 1ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [201 Created, 202B, 1ms]
+  ✓  Статус 201 Created
+  ✓  result = OK
+  ✓  registrationID нь тоо
+
+❏ S10 — studentID талбар дутуу бол 400 ERROR_BAD_REQUEST
+↳ setup: PUT /courses/CS313
+  PUT http://localhost:3000/courses/CS313 [200 OK, 178B, 1ms]
+
+↳ POST /registrations
+  POST http://localhost:3000/registrations [400 Bad Request, 202B, 2ms]
+  ✓  Статус 400 Bad Request
+  ✓  result = ERROR_BAD_REQUEST
+
+❏ S11 — Буруу JSON илгээхэд 400 ERROR_BAD_JSON
+↳ POST /registrations
+  POST http://localhost:3000/registrations [400 Bad Request, 199B, 1ms]
+  ✓  Статус 400 Bad Request
+  ✓  result = ERROR_BAD_JSON
+
+┌─────────────────────────┬─────────────────┬─────────────────┐
+│                         │        executed │          failed │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              iterations │               1 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│                requests │              26 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│            test-scripts │              11 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│      prerequest-scripts │               0 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              assertions │              31 │               0 │
+├─────────────────────────┴─────────────────┴─────────────────┤
+│ total run duration: 343ms                                   │
+├─────────────────────────────────────────────────────────────┤
+│ total data received: 618B (approx)                          │
+├─────────────────────────────────────────────────────────────┤
+│ average response time: 2ms [min: 1ms, max: 21ms, s.d.: 3ms] │
+└─────────────────────────────────────────────────────────────┘
+exit=0

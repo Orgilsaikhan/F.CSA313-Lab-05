@@ -18,7 +18,7 @@ $ newman -v
 - [x] Даалгавар 1 — Анхны хүсэлт ба 2 oracle
 - [x] Даалгавар 2 — Сонголт, төлөөлөх утга, спецификацийн хүснэгт
 - [x] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
-- [ ] Даалгавар 4 — Newman: PASS / FAIL / DOWN
+- [x] Даалгавар 4 — Newman: PASS / FAIL / DOWN
 - [ ] Даалгавар 5 — Нийтийн API (jsonplaceholder)
 - [ ] Дүгнэлт
 
@@ -189,4 +189,63 @@ S11 exit=0  assertions 2 0
 ```
 
 > **Ажиглалт:** 3 удаа ажиллуулсны дараа `GET /registrations` дээр `B231234567 → CS313` **3 удаа** бүртгэгдсэн байсан (`registrationID` 1, 3, 5). Сервер давхар бүртгэлийг шалгадаггүй — Дүгнэлтэд дэлгэрэнгүй.
+
+## Даалгавар 4: Newman
+
+```bash
+mkdir -p results
+newman run lab05-collection.json 2>&1 | tee results/newman-pass.txt; echo "exit=${PIPESTATUS[0]}" | tee -a results/newman-pass.txt
+newman run lab05-collection-fail.json 2>&1 | tee results/newman-fail.txt; echo "exit=${PIPESTATUS[0]}" | tee -a results/newman-fail.txt
+# серверийг Ctrl+C-ээр унтраасны дараа:
+newman run lab05-collection.json 2>&1 | tee results/newman-down.txt; echo "exit=${PIPESTATUS[0]}" | tee -a results/newman-down.txt
+```
+
+Lab 03-аас сурсанчлан `$?` биш `${PIPESTATUS[0]}` ашигласан (`| tee`-ийн дараах `$?` нь tee-ийн 0). Exit code-ийг файлын төгсгөлд `exit=N` мөрөөр хавсаргасан тул нотолгоо `results/` дотроо байна. Newman гаралтыг pipe руу явуулахад өнгөний ANSI код оруулдаггүй тул файлууд цэвэр текст.
+
+| Ажиллуулалт | Collection | requests (executed / failed) | assertions (executed / failed) | Exit code |
+|---|---|---|---|---|
+| **PASS** — `results/newman-pass.txt` | `lab05-collection.json` | 26 / 0 | **31 / 0** | **0** |
+| **FAIL** — `results/newman-fail.txt` | `lab05-collection-fail.json` | 26 / 0 | **31 / 1** | **1** |
+| **DOWN** — `results/newman-down.txt` | `lab05-collection.json` | 26 / **26** | 31 / 31 | **1** |
+
+### PASS
+
+11 тест, **31 assertion executed, 0 failed, exit 0**.
+
+### FAIL
+
+`lab05-collection-fail.json` нь үндсэн collection-ийн хуулбар — зөвхөн S1-ийн статусын oracle-ийг зориуд буруу болгосон (үндсэн `lab05-collection.json` зөв хэвээр):
+
+```diff
+-pm.test("Статус 201 Created", function () {
+-    pm.response.to.have.status(201);
++pm.test("Статус 200 OK", function () {
++    pm.response.to.have.status(200);
+```
+
+```
+ 1.  AssertionError  Статус 200 OK
+                     expected response to have status code 200 but got 201
+                     inside "S1 — Идэвхтэй, урьдач нөхцөл хангасан оюутан бүртгүүлэхэд 201 OK / POST /registrations"
+exit=1
+```
+
+**31 executed, 1 failed, exit 1.** CI quality gate-ийн зарчим: Newman ганц assertion унахад л 0 биш exit code буцаадаг тул CI pipeline тэр алхам дээр зогсож, буруу код merge/deploy хийгдэхгүй.
+
+### DOWN
+
+Серверийг Ctrl+C-ээр унтраагаад үндсэн collection-ийг ажиллуулсан. Хүсэлт бүр `connect ECONNREFUSED 127.0.0.1:3000` (файлд 52 мөр) → **requests 26 / 26 failed, exit 1**.
+
+```
+↳ POST /registrations
+  POST http://localhost:3000/registrations [errored]
+     connect ECONNREFUSED 127.0.0.1:3000
+  4. Статус 201 Created
+  5. result = OK
+  6. registrationID нь тоо
+```
+
+**Интерфейсийн алдаа ба oracle-ийн алдааны ялгаа:** DOWN нь интерфейсийн алдаа — хүсэлт серверт хүрээгүй (TCP холболт татгалзсан) тул шалгах хариу огт байхгүй, харин FAIL нь oracle-ийн алдаа — сервер хариулсан ч хариу (201) хүлээлттэй (200) зөрсөн.
+
+Хоёулаа exit 1 өгдөг тул exit code-оор ялгах боломжгүй — `requests failed` мөрийг харна: FAIL-д 0 (сервер бүх хүсэлтэд хариулсан), DOWN-д 26. DOWN-ийн "assertions 31 failed" нь жинхэнэ oracle-ийн алдаа биш: мессежүүд нь `expected PostmanResponse{ …(5) } to have property 'code'` (11) ба `"undefined" is not valid JSON` (20) — хариу байхгүй тул oracle үнэлэх юмгүй болсон. Нийт 57 failure = 26 холболтын алдаа + 31 хариугүй assertion.
 

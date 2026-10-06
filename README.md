@@ -15,7 +15,7 @@ $ newman -v
 ## Явц
 
 - [x] Алхам 1 — Орчин бэлдэх, `server.js` ажиллуулж curl-ээр шалгах
-- [ ] Даалгавар 1 — Анхны хүсэлт ба 2 oracle
+- [x] Даалгавар 1 — Анхны хүсэлт ба 2 oracle
 - [ ] Даалгавар 2 — Сонголт, төлөөлөх утга, спецификацийн хүснэгт
 - [ ] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
 - [ ] Даалгавар 4 — Newman: PASS / FAIL / DOWN
@@ -41,3 +41,38 @@ $ curl -X PUT localhost:3000/courses/CS313 -H 'Content-Type: application/json' -
 $ curl -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"B231234567","courseID":"CS313"}'
 {"result":"OK","registrationID":1}
 ```
+
+## Даалгавар 1: Анхны хүсэлт ба oracle
+
+`lab05-collection.json` (Postman Collection v2.1 — Postman-д File → Import-оор нээгдэнэ) үүсгэж, `baseUrl = http://localhost:3000` collection variable нэмсэн. Бүх URL `{{baseUrl}}/...` хэлбэртэй тул серверийн хаяг солигдвол нэг газар засна.
+
+Эхний folder 3 хүсэлттэй:
+
+| # | Хүсэлт | Бие |
+|---|---|---|
+| 1 | `PUT {{baseUrl}}/students/B231234567` | `{"status":"active","coursesTaken":["CS201"]}` |
+| 2 | `PUT {{baseUrl}}/courses/CS313` | `{"prerequisites":["CS201"]}` |
+| 3 | `POST {{baseUrl}}/registrations` | `{"studentID":"B231234567","courseID":"CS313"}` |
+
+POST-ийн Tests таб дахь 2 oracle — статус ба утга:
+
+```js
+pm.test("Статус 201 Created", function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test("result = OK", function () {
+    pm.expect(pm.response.json().result).to.eql("OK");
+});
+```
+
+```
+$ newman run lab05-collection.json
+↳ POST /registrations
+  POST http://localhost:3000/registrations [201 Created, 202B, 3ms]
+  ✓  Статус 201 Created
+  ✓  result = OK
+...
+│              assertions │               2 │               0 │
+```
+

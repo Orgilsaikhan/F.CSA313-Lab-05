@@ -7,10 +7,10 @@ $ node -v
 v22.22.1
 
 $ newman -v
-NEWMAN_VERSION
+6.2.2
 ```
 
-Орчин: Ubuntu 26.04.1 LTS · Node.js v22.22.1 · Newman NEWMAN_VERSION
+Орчин: Ubuntu 26.04.1 LTS · Node.js v22.22.1 · Newman 6.2.2
 
 ## Явц
 

@@ -1,0 +1,55 @@
+{
+	"info": {
+		"_postman_id": "c41e8a07-6d2b-4f93-8e5a-2a7b9d0f3c16",
+		"name": "Lab05 — Нийтийн API (jsonplaceholder)",
+		"description": "F.CSA313 Lab 05, Даалгавар 5 — GET-only нийтийн API, setup шаардлагагүй.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET /users — 10 хэрэглэгчийн жагсаалт, эхнийх нь Leanne Graham",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{publicUrl}}/users",
+					"host": [
+						"{{publicUrl}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Статус 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Хариу нь массив\", function () {",
+							"    pm.expect(pm.response.json()).to.be.an(\"array\");",
+							"});",
+							"",
+							"pm.test(\"Эхний хэрэглэгчийн нэр = Leanne Graham\", function () {",
+							"    pm.expect(pm.response.json()[0].name).to.eql(\"Leanne Graham\");",
+							"});"
+						]
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "publicUrl",
+			"value": "https://jsonplaceholder.typicode.com",
+			"type": "string"
+		}
+	]
+}

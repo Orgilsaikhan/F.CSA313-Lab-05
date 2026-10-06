@@ -19,7 +19,7 @@ $ newman -v
 - [x] Даалгавар 2 — Сонголт, төлөөлөх утга, спецификацийн хүснэгт
 - [x] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
 - [x] Даалгавар 4 — Newman: PASS / FAIL / DOWN
-- [ ] Даалгавар 5 — Нийтийн API (jsonplaceholder)
+- [x] Даалгавар 5 — Нийтийн API (jsonplaceholder)
 - [ ] Дүгнэлт
 
 ---
@@ -248,4 +248,30 @@ exit=1
 **Интерфейсийн алдаа ба oracle-ийн алдааны ялгаа:** DOWN нь интерфейсийн алдаа — хүсэлт серверт хүрээгүй (TCP холболт татгалзсан) тул шалгах хариу огт байхгүй, харин FAIL нь oracle-ийн алдаа — сервер хариулсан ч хариу (201) хүлээлттэй (200) зөрсөн.
 
 Хоёулаа exit 1 өгдөг тул exit code-оор ялгах боломжгүй — `requests failed` мөрийг харна: FAIL-д 0 (сервер бүх хүсэлтэд хариулсан), DOWN-д 26. DOWN-ийн "assertions 31 failed" нь жинхэнэ oracle-ийн алдаа биш: мессежүүд нь `expected PostmanResponse{ …(5) } to have property 'code'` (11) ба `"undefined" is not valid JSON` (20) — хариу байхгүй тул oracle үнэлэх юмгүй болсон. Нийт 57 failure = 26 холболтын алдаа + 31 хариугүй assertion.
+
+## Даалгавар 5: Нийтийн API
+
+`lab05-public-collection.json` — **тусдаа** collection (`{{publicUrl}} = https://jsonplaceholder.typicode.com`). Үндсэн collection-д нэмээгүйн шалтгаан: PASS ажиллуулалт интернетээс хамааралгүй байх ба README-ийн 31 assertion-ы тоо зөвхөн өөрийн API-г хэмжинэ.
+
+```js
+pm.test("Статус 200 OK", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Хариу нь массив", function () {
+    pm.expect(pm.response.json()).to.be.an("array");
+});
+
+pm.test("Эхний хэрэглэгчийн нэр = Leanne Graham", function () {
+    pm.expect(pm.response.json()[0].name).to.eql("Leanne Graham");
+});
+```
+
+```bash
+newman run lab05-public-collection.json 2>&1 | tee results/newman-public.txt; echo "exit=${PIPESTATUS[0]}" | tee -a results/newman-public.txt
+```
+
+`results/newman-public.txt`: **3 assertion executed, 0 failed, exit 0** (`GET https://jsonplaceholder.typicode.com/users [200 OK, 6.6kB, 407ms]`).
+
+**Өөрийн API-тай харьцуулбал:** GET-only тул setup, тест хоорондын бие даасан байдал гэж санаа зовох зүйлгүй хялбар байсан ч өгөгдлийг би удирддаггүй тул "Leanne Graham" oracle гуравдагч этгээдийн өгөгдөл өөрчлөгдөхөд унаж болох ба идэвхгүй оюутан шиг алдааны төлөвийг өөрөө үүсгэж чадахгүй тул зөвхөн happy path-ийг л шалгаж болсон.
 

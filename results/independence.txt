@@ -1,0 +1,19 @@
+# Тест бүр бие даасан эсэх — folder бүрийг шинээр асаасан (хоосон) сервер дээр дангаар нь
+S1   assertions executed=3 failed=0 exit=0  # S1 — Идэвхтэй, урьдач нөхцөл хангасан оюутан бүртгүүлэхэд 201 OK
+S2   assertions executed=3 failed=0 exit=0  # S2 — Байхгүй оюутан бүртгүүлэхэд ERROR_NO_STUDENT
+S3   assertions executed=3 failed=0 exit=0  # S3 — Идэвхгүй оюутан бүртгүүлэхэд ERROR_INACTIVE_STUDENT
+S4   assertions executed=3 failed=0 exit=0  # S4 — Байхгүй хичээлд бүртгүүлэхэд ERROR_NO_COURSE
+S5   assertions executed=3 failed=0 exit=0  # S5 — Урьдач нөхцөлийн зарим нь дутуу бол ERROR_PREREQUISITES, missing = [CS313]
+S6   assertions executed=3 failed=0 exit=0  # S6 — Урьдач нөхцөлийг огт үзээгүй бол ERROR_PREREQUISITES, missing = бүгд
+S7   assertions executed=3 failed=0 exit=0  # S7 — Оюутан ч хичээл ч байхгүй бол ERROR_NO_STUDENT давуу
+S8   assertions executed=3 failed=0 exit=0  # S8 — Идэвхгүй оюутан урьдач нөхцөлгүйгээр бүртгүүлэхэд ERROR_INACTIVE_STUDENT давуу
+S9   assertions executed=3 failed=0 exit=0  # S9 — Хоосон coursesTaken-тай оюутан урьдач нөхцөлгүй хичээлд бүртгүүлэхэд 201 OK
+S10  assertions executed=2 failed=0 exit=0  # S10 — studentID талбар дутуу бол 400 ERROR_BAD_REQUEST
+S11  assertions executed=2 failed=0 exit=0  # S11 — Буруу JSON илгээхэд 400 ERROR_BAD_JSON
+
+# Нэг сервер дээр collection-ийг 3 удаа дараалан (registrationID хуримтлагдана)
+run 1: assertions executed=31 failed=0 exit=0
+run 2: assertions executed=31 failed=0 exit=0
+run 3: assertions executed=31 failed=0 exit=0
+$ curl -s localhost:3000/registrations
+[{"registrationID":1,"studentID":"B231234567","courseID":"CS313"},{"registrationID":2,"studentID":"B236666666","courseID":"CS101"},{"registrationID":3,"studentID":"B231234567","courseID":"CS313"},{"registrationID":4,"studentID":"B236666666","courseID":"CS101"},{"registrationID":5,"studentID":"B231234567","courseID":"CS313"},{"registrationID":6,"studentID":"B236666666","courseID":"CS101"}]

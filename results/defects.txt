@@ -1,0 +1,46 @@
+# Олдсон согогууд — server.js (шинээр асаасан сервер дээр)
+
+## D1: Давхар бүртгэл — нэг оюутан нэг хичээлд хэд ч удаа бүртгүүлж болно
+$ curl -s -X PUT localhost:3000/students/B231234567 -H 'Content-Type: application/json' -d '{"status":"active","coursesTaken":["CS201"]}'
+{"result":"OK"}
+
+$ curl -s -X PUT localhost:3000/courses/CS313 -H 'Content-Type: application/json' -d '{"prerequisites":["CS201"]}'
+{"result":"OK"}
+
+$ curl -s -w ' [%{http_code}]' -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"B231234567","courseID":"CS313"}'
+{"result":"OK","registrationID":1} [201]
+
+$ curl -s -w ' [%{http_code}]' -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"B231234567","courseID":"CS313"}'
+{"result":"OK","registrationID":2} [201]
+
+$ curl -s localhost:3000/registrations
+[{"registrationID":1,"studentID":"B231234567","courseID":"CS313"},{"registrationID":2,"studentID":"B231234567","courseID":"CS313"}]
+
+## D2: Object.prototype-ийн нэр бүхий studentID — байхгүй оюутанд ERROR_NO_STUDENT биш ERROR_INACTIVE_STUDENT
+$ curl -s -w ' [%{http_code}]' -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"toString","courseID":"CS313"}'
+{"result":"ERROR_INACTIVE_STUDENT"} [200]
+
+$ curl -s -w ' [%{http_code}]' -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"constructor","courseID":"CS313"}'
+{"result":"ERROR_INACTIVE_STUDENT"} [200]
+
+## D3: courseID = "__proto__" — сервер бүхэлдээ унана
+$ curl -s -w ' [%{http_code}]' -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"B231234567","courseID":"__proto__"}'
+ [000]
+
+$ curl -s -w ' [%{http_code}]' localhost:3000/registrations
+ [000]
+
+## Серверийн терминал (node server.js)
+Бүртгэлийн API: http://localhost:3000
+/home/hugo/Documents/Classes/QA/Lab 05/server.js:59
+      const missing = course.prerequisites.filter(
+                                           ^
+
+TypeError: Cannot read properties of undefined (reading 'filter')
+    at IncomingMessage.<anonymous> (/home/hugo/Documents/Classes/QA/Lab 05/server.js:59:44)
+    at IncomingMessage.emit (node:events:519:28)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+Node.js v22.22.1
+node server.js exit=1

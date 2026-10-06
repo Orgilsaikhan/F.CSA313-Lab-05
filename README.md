@@ -12,6 +12,17 @@ $ newman -v
 
 Орчин: Ubuntu 26.04.1 LTS · Node.js v22.22.1 · Newman 6.2.2
 
+## Товч үр дүн
+
+| Үзүүлэлт | Үр дүн |
+|---|---|
+| Спецификаци / тест | **11** (S1–S11), collection-д 11 бие даасан folder |
+| `results/newman-pass.txt` | requests 26, **assertions 31 executed, 0 failed**, `exit=0` |
+| `results/newman-fail.txt` (S1: 201 → 200) | assertions 31 executed, **1 failed**, `exit=1` |
+| `results/newman-down.txt` (сервер унтарсан) | `ECONNREFUSED`, requests 26 / 26 failed, `exit=1` |
+| `results/newman-public.txt` (Даалгавар 5) | assertions 3 executed, 0 failed, `exit=0` |
+| `server.js`-ээс олдсон согог | **3** — давхар бүртгэл, `"toString"` ID буруу алдаа, `"__proto__"` серверийг унагадаг (`results/defects.txt`) |
+
 ## Явц
 
 - [x] Алхам 1 — Орчин бэлдэх, `server.js` ажиллуулж curl-ээр шалгах
@@ -20,7 +31,31 @@ $ newman -v
 - [x] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
 - [x] Даалгавар 4 — Newman: PASS / FAIL / DOWN
 - [x] Даалгавар 5 — Нийтийн API (jsonplaceholder)
-- [ ] Дүгнэлт
+- [x] Дүгнэлт
+
+## Репогийн бүтэц
+
+```
+server.js                     # тестлэгдэх API (багшийн өгсөн, өөрчлөөгүй)
+lab05-collection.json         # 11 тест, 31 assertion — Postman Collection v2.1
+lab05-collection-fail.json    # FAIL хувилбар — S1 статусын oracle 201 → 200
+lab05-public-collection.json  # Даалгавар 5 — jsonplaceholder GET /users, 3 assertion
+results/newman-pass.txt       # Даалгавар 4 — PASS, exit=0
+results/newman-fail.txt       # Даалгавар 4 — FAIL, exit=1
+results/newman-down.txt       # Даалгавар 4 — DOWN (ECONNREFUSED), exit=1
+results/newman-public.txt     # Даалгавар 5 — exit=0
+results/independence.txt      # Даалгавар 3 — folder бүрийг дангаар нь + 3 удаа дараалан ажиллуулсан нь
+results/defects.txt           # server.js-ийн 3 согогийг curl-ээр баримтжуулсан нь
+```
+
+Өөрөө ажиллуулж шалгах бол:
+
+```bash
+sudo npm install -g newman
+node server.js                                                                # 1-р терминал
+newman run lab05-collection.json 2>&1 | tee results/newman-pass.txt           # 2-р терминал
+echo "exit=${PIPESTATUS[0]}"
+```
 
 ---
 
@@ -66,14 +101,14 @@ pm.test("result = OK", function () {
 });
 ```
 
+Энэ folder Даалгавар 3-т S1 болж, `registrationID`-ийн гурав дахь oracle нэмэгдсэн. `results/newman-pass.txt` дахь S1:
+
 ```
-$ newman run lab05-collection.json
 ↳ POST /registrations
-  POST http://localhost:3000/registrations [201 Created, 202B, 3ms]
+  POST http://localhost:3000/registrations [201 Created, 202B, 2ms]
   ✓  Статус 201 Created
   ✓  result = OK
-...
-│              assertions │               2 │               0 │
+  ✓  registrationID нь тоо
 ```
 
 ## Даалгавар 2: Тест дизайн (Лекц 5-ын 5 алхам)
@@ -178,14 +213,17 @@ Lab05 — Хичээлд бүртгүүлэх API          {{baseUrl}} = http://
 
 - Тест бүр **өөрийн** setup-ыг өөрөө хийдэг. Оюутны ID тест бүрт өөр (`B231234567`, `B231111111`, …), хичээл (`CS313`, `CS401`) давхцаж болох ч тест бүр POST-оос яг өмнө өөрт хэрэгтэй утгаар нь дахин PUT хийдэг.
 - "Байхгүй" утгууд (`B239999999`, `CS999`) — ямар ч тест эдгээрийг PUT хийдэггүй тул үргэлж байхгүй хэвээр.
-- Шалгасан нь: folder бүрийг **дангаар нь, шинээр асаасан (хоосон) сервер дээр** `newman run lab05-collection.json --folder "S5 — ..."` гэж ажиллуулахад 11-үүлээ exit 0. Мөн нэг сервер дээр collection-ийг 3 удаа дараалан ажиллуулахад 3 удаа 31/31.
+- Шалгасан нь (`results/independence.txt`): folder бүрийг **дангаар нь, шинээр асаасан (хоосон) сервер дээр** `newman run lab05-collection.json --folder "S5 — ..."` гэж ажиллуулахад 11-үүлээ exit 0. Мөн нэг сервер дээр collection-ийг 3 удаа дараалан ажиллуулахад 3 удаа 31 executed, 0 failed.
 
 ```
-S1  exit=0  assertions 3 0
-S2  exit=0  assertions 3 0
+S1   assertions executed=3 failed=0 exit=0  # S1 — Идэвхтэй, урьдач нөхцөл хангасан оюутан бүртгүүлэхэд 201 OK
 ...
-S10 exit=0  assertions 2 0
-S11 exit=0  assertions 2 0
+S10  assertions executed=2 failed=0 exit=0  # S10 — studentID талбар дутуу бол 400 ERROR_BAD_REQUEST
+S11  assertions executed=2 failed=0 exit=0  # S11 — Буруу JSON илгээхэд 400 ERROR_BAD_JSON
+
+run 1: assertions executed=31 failed=0 exit=0
+run 2: assertions executed=31 failed=0 exit=0
+run 3: assertions executed=31 failed=0 exit=0
 ```
 
 > **Ажиглалт:** 3 удаа ажиллуулсны дараа `GET /registrations` дээр `B231234567 → CS313` **3 удаа** бүртгэгдсэн байсан (`registrationID` 1, 3, 5). Сервер давхар бүртгэлийг шалгадаггүй — Дүгнэлтэд дэлгэрэнгүй.
@@ -275,3 +313,20 @@ newman run lab05-public-collection.json 2>&1 | tee results/newman-public.txt; ec
 
 **Өөрийн API-тай харьцуулбал:** GET-only тул setup, тест хоорондын бие даасан байдал гэж санаа зовох зүйлгүй хялбар байсан ч өгөгдлийг би удирддаггүй тул "Leanne Graham" oracle гуравдагч этгээдийн өгөгдөл өөрчлөгдөхөд унаж болох ба идэвхгүй оюутан шиг алдааны төлөвийг өөрөө үүсгэж чадахгүй тул зөвхөн happy path-ийг л шалгаж болсон.
 
+## Олдсон согогууд (`server.js`)
+
+Спецификацийн хүлээгдэх утгуудыг curl-ээр шалгаж байхдаа "байхгүй" ID-нд энгийн бус утга (`toString`, `__proto__`) туршиж үзсэн. Бүгдийг шинээр асаасан сервер дээр давтаж `results/defects.txt`-д хадгалсан.
+
+| # | Оролт | Хүлээгдэх | Бодит | Шалтгаан |
+|---|---|---|---|---|
+| D1 | Нэг оюутан нэг хичээлд 2 удаа `POST` | 2 дахь нь алдаа (жишээ нь `ERROR_ALREADY_REGISTERED`) — API-гийн тодорхойлолтод заагаагүй | Хоёулаа `201`, `registrationID` 1, 2 | `registrations.push` (мөр 66)-ийн өмнө давхардал шалгадаггүй |
+| D2 | `studentID: "toString"` / `"constructor"` (PUT хийгээгүй) | `200 ERROR_NO_STUDENT` | `200 ERROR_INACTIVE_STUDENT` | `students[studentID]` (мөр 51) нь `Object.prototype`-ийн функцийг олж "оюутан байна" гэж үзээд, `status` нь `undefined` тул идэвхгүй гэж дүгнэдэг |
+| D3 | `courseID: "__proto__"` | `200 ERROR_NO_COURSE` | **Хариу ирэхгүй, сервер унана** (`TypeError: Cannot read properties of undefined (reading 'filter')`, мөр 59) → дараагийн бүх хүсэлт `ECONNREFUSED` | `courses["__proto__"]` нь `Object.prototype`-г буцаадаг, түүнд `prerequisites` байхгүй |
+
+D3 хамгийн ноцтой: нэвтрэлтгүй ганц хүсэлт бүх хэрэглэгчийн үйлчилгээг зогсооно — Даалгавар 4-ийн DOWN ажиллуулалтыг гаднаас хэн ч үүсгэж чадна гэсэн үг. D2, D3 хоёул `{}` объектыг map болгон ашигласнаас үүдэлтэй — `Map` эсвэл `Object.hasOwn(students, id)` ашиглавал засагдана. PUT endpoint-ууд `[\w-]+` regex-ээр ID-г шалгадаг ч POST-ийн биеийн `studentID`, `courseID`-г огт шалгадаггүй.
+
+`server.js` нь багшийн өгсөн тестлэгдэх систем тул **засаагүй**. Эдгээрийг PASS collection-д тест болгож оруулаагүй: D3-ын тест серверийг унагаж, араас нь ажиллах бүх тестийг эвдэх байсан.
+
+## Дүгнэлт
+
+Лекц 5-ын 5 алхмыг `POST /registrations` дээр хэрэгжүүлж, 4 сонголтоос 11 спецификаци гаргаад collection-д 11 бие даасан тест болгосон бөгөөд `results/newman-pass.txt`-д **31 assertion executed, 0 failed, exit 0** гарсан. Хамгийн их бодол шаардсан нь 2-р алхам буюу сонголтуудыг тодорхойлох байсан: зааврын "оюутны үзсэн хичээлүүд" ба "хичээлийн урьдач нөхцөл" сонголтууд нэг баримтыг хоёр талаас нь хардаг тул тэдгээрийг бие даасан мэт үржүүлбэл утгагүй хослолууд үүсдэг. Гурван боломжгүй хослол таарсан — байхгүй оюутны үзсэн хичээл, байхгүй хичээлийн урьдач нөхцөл, "урьдач нөхцөл хангасан ч огт үзээгүй" — эдгээрийг хасахад 36 хослол 10 болж буурсан. Давхар алдааны үед аль нь буцахыг зааварт бичээгүй тул туршиж тогтоосон: сервер эхлээд оюутныг, дараа нь хичээлийг шалгадаг бөгөөд S7, S8 энэ дарааллыг тестээр бэхжүүлсэн. FAIL ба DOWN хоёулаа exit 1 өгдөг ч FAIL нь oracle-ийн алдаа (сервер хариулсан, утга зөрсөн), DOWN нь интерфейсийн алдаа (хариу огт ирээгүй) бөгөөд тэдгээрийг `requests failed` мөрөөр ялгадаг. Collection-ийг нэг сервер дээр давтан ажиллуулахад нэг оюутан нэг хичээлд хэд хэдэн удаа бүртгэгдсэн нь харагдсан нь давхар бүртгэлийн согог (D1) байв. Хязгаарын утгуудыг гараар туршихад `studentID: "toString"` гэж байхгүй оюутан илгээхэд `ERROR_NO_STUDENT`-ийн оронд `ERROR_INACTIVE_STUDENT` буцдаг (D2), харин `courseID: "__proto__"` гэсэн ганц хүсэлт серверийг бүхэлд нь унагадаг (D3) нь илэрсэн. D3-ын дараа бусад бүх хэрэглэгч DOWN ажиллуулалттай яг адил `ECONNREFUSED` авна — өөрөөр хэлбэл нэг endpoint-ийн oracle-ийн алдаа бүх системийн интерфейсийн алдаа болж хувирсан. Миний спецификацийн хүснэгтэд "байхгүй ID"-г зөвхөн `B239999999` гэсэн энгийн утгаар төлөөлүүлсэн нь "ангийн нэг утга бүх ангийг төлөөлнө" гэсэн эквивалент ангийн таамаглал хэрэгжүүлэлтийн онцлогоос (JavaScript объектын prototype) болж зөрчигдөж болохыг харуулсан. Эндээс сурсан зүйл: тестийн дизайн нь шаардлагаас эхэлдэг ч төлөөлөх утгыг сонгохдоо системийн хэрэгжүүлэлтийн технологи ямар утгыг "онцгой" гэж үздэгийг мөн бодох хэрэгтэй.

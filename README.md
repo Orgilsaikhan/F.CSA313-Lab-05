@@ -17,7 +17,7 @@ $ newman -v
 - [x] Алхам 1 — Орчин бэлдэх, `server.js` ажиллуулж curl-ээр шалгах
 - [x] Даалгавар 1 — Анхны хүсэлт ба 2 oracle
 - [x] Даалгавар 2 — Сонголт, төлөөлөх утга, спецификацийн хүснэгт
-- [ ] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
+- [x] Даалгавар 3 — Collection бүтээх (8+ бие даасан тест)
 - [ ] Даалгавар 4 — Newman: PASS / FAIL / DOWN
 - [ ] Даалгавар 5 — Нийтийн API (jsonplaceholder)
 - [ ] Дүгнэлт
@@ -140,5 +140,53 @@ $ newman run lab05-collection.json
 
 ### Алхам 5 — Бодит тест кейс
 
-→ Даалгавар 3: спецификаци бүр collection-д тусдаа folder болно.
+→ Даалгавар 3: спецификаци бүр collection-д тусдаа folder (тест) болно.
+
+## Даалгавар 3: Collection
+
+`lab05-collection.json` нь **11 folder = 11 тест** (S1–S11). Folder бүр: setup `PUT`-ууд (0–2) → `POST /registrations` → Tests таб дахь oracle-ууд. Даалгавар 1-ийн folder нь S1 болж, `registrationID`-ийн oracle нэмэгдсэн.
+
+```
+Lab05 — Хичээлд бүртгүүлэх API          {{baseUrl}} = http://localhost:3000
+├── S1 — Идэвхтэй, урьдач нөхцөл хангасан оюутан бүртгүүлэхэд 201 OK
+│   ├── setup: PUT /students/B231234567
+│   ├── setup: PUT /courses/CS313
+│   └── POST /registrations              ✓ Статус 201 Created  ✓ result = OK  ✓ registrationID нь тоо
+├── S2 — Байхгүй оюутан бүртгүүлэхэд ERROR_NO_STUDENT
+├── S3 — Идэвхгүй оюутан бүртгүүлэхэд ERROR_INACTIVE_STUDENT
+├── ...
+└── S11 — Буруу JSON илгээхэд 400 ERROR_BAD_JSON
+```
+
+### Oracle-ууд
+
+| Oracle | Хаана | Код |
+|---|---|---|
+| Статус | бүх 11 тест | `pm.response.to.have.status(201)` |
+| `result` утга | бүх 11 тест | `pm.expect(pm.response.json().result).to.eql("ERROR_NO_STUDENT")` |
+| `registrationID` нь тоо | S1, S9 (амжилттай) | `pm.expect(json.registrationID).to.be.a("number")` |
+| Бүртгэл үүсээгүй | S2, S3, S4, S7, S8 | `pm.expect(json).to.not.have.property("registrationID")` |
+| `missing` массив | S5, S6 | `pm.expect(json.missing).to.eql(["CS201","CS313"])` |
+
+**Assertion-ы тоо:** 9 тест × 3 + 2 тест (S10, S11) × 2 = **31**.
+
+`registrationID`-ийн **яг утгыг шалгаагүй** — сервер in-memory тул ажиллуулах бүрд 1, 2, 3, … гэж хуримтлагдана. Зөвхөн тоо мөн эсэхийг шалгадаг тул collection-ийг серверийг дахин асаалгүй хэдэн ч удаа ажиллуулж болно.
+
+Алдааны тестүүдэд статус + `result`-ээс гадна **"бүртгэл үүсээгүй"** oracle нэмсэн. Статус ба `result` зөв боловч сервер алдааны үед ч бүртгэл үүсгээд `registrationID` буцаадаг байвал энэ oracle л барина.
+
+### Тест бүр бие даасан
+
+- Тест бүр **өөрийн** setup-ыг өөрөө хийдэг. Оюутны ID тест бүрт өөр (`B231234567`, `B231111111`, …), хичээл (`CS313`, `CS401`) давхцаж болох ч тест бүр POST-оос яг өмнө өөрт хэрэгтэй утгаар нь дахин PUT хийдэг.
+- "Байхгүй" утгууд (`B239999999`, `CS999`) — ямар ч тест эдгээрийг PUT хийдэггүй тул үргэлж байхгүй хэвээр.
+- Шалгасан нь: folder бүрийг **дангаар нь, шинээр асаасан (хоосон) сервер дээр** `newman run lab05-collection.json --folder "S5 — ..."` гэж ажиллуулахад 11-үүлээ exit 0. Мөн нэг сервер дээр collection-ийг 3 удаа дараалан ажиллуулахад 3 удаа 31/31.
+
+```
+S1  exit=0  assertions 3 0
+S2  exit=0  assertions 3 0
+...
+S10 exit=0  assertions 2 0
+S11 exit=0  assertions 2 0
+```
+
+> **Ажиглалт:** 3 удаа ажиллуулсны дараа `GET /registrations` дээр `B231234567 → CS313` **3 удаа** бүртгэгдсэн байсан (`registrationID` 1, 3, 5). Сервер давхар бүртгэлийг шалгадаггүй — Дүгнэлтэд дэлгэрэнгүй.
 
